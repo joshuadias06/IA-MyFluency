@@ -1,16 +1,19 @@
+import json
 from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
 from models import db, Interaction
 from services.grammar import correct_grammar
 from services.sentiment import analyze_sentiment
 from services.suggestions import generate_suggestions
 from transformers import pipeline
-import json  # Importa o módulo JSON para converter listas em strings
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
+
+CORS(app)
 
 # Pipeline da IA
 chat_pipeline = pipeline("text-generation", model="gpt2")
@@ -41,16 +44,17 @@ def process():
     # Sugestões
     suggestions = generate_suggestions(chat_response)
 
-    # Converter sugestões para string (JSON)
-    suggestions_str = json.dumps(suggestions)
+    # Serializar as sugestões e correções para JSON
+    suggestions_json = json.dumps(suggestions)
+    corrections_json = json.dumps(corrections)
 
-    # Armazenar no banco de dados
+    # Armazenar no banco
     interaction = Interaction(
         user_input=user_input,
         response=chat_response,
-        suggestions=suggestions_str,  # Armazena como string JSON
+        suggestions=suggestions_json,
         sentiment=sentiment,
-        grammar_corrections=json.dumps(corrections)  # Converter correções para string JSON também
+        grammar_corrections=corrections_json
     )
     db.session.add(interaction)
     db.session.commit()
