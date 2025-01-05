@@ -5,6 +5,7 @@ from services.grammar import correct_grammar
 from services.sentiment import analyze_sentiment
 from services.suggestions import generate_suggestions
 from transformers import pipeline
+import json  # Importa o módulo JSON para converter listas em strings
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
@@ -40,13 +41,16 @@ def process():
     # Sugestões
     suggestions = generate_suggestions(chat_response)
 
-    # Armazenar no banco
+    # Converter sugestões para string (JSON)
+    suggestions_str = json.dumps(suggestions)
+
+    # Armazenar no banco de dados
     interaction = Interaction(
         user_input=user_input,
         response=chat_response,
-        suggestions=suggestions,
+        suggestions=suggestions_str,  # Armazena como string JSON
         sentiment=sentiment,
-        grammar_corrections=corrections
+        grammar_corrections=json.dumps(corrections)  # Converter correções para string JSON também
     )
     db.session.add(interaction)
     db.session.commit()
