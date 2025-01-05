@@ -14,7 +14,7 @@ db.init_app(app)
 # Pipeline da IA
 chat_pipeline = pipeline("text-generation", model="gpt2")
 
-@app.before_first_request
+@app.before_request
 def setup():
     db.create_all()
 
